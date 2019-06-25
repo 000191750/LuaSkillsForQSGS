@@ -1,7 +1,7 @@
 代码速查手册（J区）
 ==
 #技能索引：
-[鸡肋](#鸡肋)、[激昂](#激昂)、[激将](#激将)、[极略](#极略)、[急救](#急救)、[急速](#急速)、[急袭](#急袭)、[集智](#集智)、[集智-旧](#集智-旧)、[嫉恶](#嫉恶)、[奸雄](#奸雄)、[奸雄-旧](#奸雄-旧)、[坚守](#坚守)、[将驰](#将驰)、[节命](#节命)、[结姻](#结姻)、[竭缘](#竭缘)、[解烦](#解烦)、[解烦-旧](#解烦-旧)、[解惑](#解惑)、[解围](#解围)、[尽瘁](#尽瘁)、[禁酒](#禁酒)、[精策](#精策)、[精锐](#精锐)、[酒池](#酒池)、[酒诗](#酒诗)、[救援](#救援)、[救主](#救主)、[举荐](#举荐)、[举荐-旧](#举荐-旧)、[巨象](#巨象)、[倨傲](#倨傲)、[据守](#据守)、[据守-旧](#据守-旧)、[据守-翼](#据守-翼)、[聚武](#聚武)、[绝策](#绝策)、[绝汲](#绝汲)、[绝境](#绝境)、[绝境-旧](#绝境-旧)、[绝情](#绝情)、[军威](#军威)、[峻刑](#峻刑)
+[鸡肋](#鸡肋)、[激昂](#激昂)、[激将](#激将)、[极略](#极略)、[急攻](#急攻)、[急救](#急救)、[急速](#急速)、[急袭](#急袭)、[集智](#集智)、[集智-旧](#集智-旧)、[嫉恶](#嫉恶)、[奸雄](#奸雄)、[奸雄-旧](#奸雄-旧)、[坚守](#坚守)、[将驰](#将驰)、[节命](#节命)、[结姻](#结姻)、[竭缘](#竭缘)、[解烦](#解烦)、[解烦-旧](#解烦-旧)、[解惑](#解惑)、[解围](#解围)、[尽瘁](#尽瘁)、[禁酒](#禁酒)、[精策](#精策)、[精锐](#精锐)、[酒池](#酒池)、[酒诗](#酒诗)、[救援](#救援)、[救主](#救主)、[举荐](#举荐)、[举荐-旧](#举荐-旧)、[巨象](#巨象)、[倨傲](#倨傲)、[据守](#据守)、[据守-旧](#据守-旧)、[据守-翼](#据守-翼)、[聚武](#聚武)、[绝策](#绝策)、[绝汲](#绝汲)、[绝境](#绝境)、[绝境-旧](#绝境-旧)、[绝情](#绝情)、[军威](#军威)、[峻刑](#峻刑)
 
 [返回目录](README.md#目录)
 ##鸡肋
@@ -289,7 +289,51 @@
 			return target and target:hasFlag("LuaJilveWansha")
 		end
 	}
-
+```
+[返回索引](#技能索引)
+##急攻
+**相关武将**：一将成名2015·郭图&逢纪  
+**描述**：出牌阶段开始时，你可以摸两张牌，然后本回合你的手牌上限等于X（X为你于此阶段内造成过的伤害值）。
+**引用**：LuaJiGong、LuaJiGongMaxCards 
+**状态**：0405验证通过
+```lua
+	LuaJiGong = sgs.CreateTriggerSkill{
+		name = "LuaJiGong",
+		frequency = sgs.Skill_NotFrequent,
+		events = {sgs.EventPhaseStart, sgs.DamageCaused},
+		on_trigger = function(self, event, player, data)
+			if event == sgs.EventPhaseStart then
+				local phase = player:getPhase()
+				if phase == sgs.Player_Play then
+					local room = player:getRoom()
+					if room:askForSkillInvoke(player, self:objectName()) then
+						player:drawCards(2)
+						player:setFlags("LuaJiGongBuff") --用于记录是否发动了急攻
+					end
+				elseif phase == sgs.Player_Finish then
+					if player:hasFlag("LuaJiGongBuff") then
+						player:setFlags("-LuaJiGongBuff")
+						player:setMark("@LuaJiGong", 0)
+					end
+				end
+			elseif event == sgs.DamageCaused then
+				if player:hasFlag("LuaJiGongBuff") then
+					local num = data:toDamage().damage
+					player:addMark("@LuaJiGong", num) --记录造成的伤害数
+				end
+			end
+		end,
+	}
+	LuaJiGongMaxCards = sgs.CreateMaxCardsSkill{
+		name = "#LuaJiGongMaxCards",	
+		extra_func = function(self, target)
+			if target:hasFlag("LuaJiGongBuff") then
+				return target:getMark("@LuaJiGong") - target:getHp()
+			else
+				return 0
+			end
+		end
+	}
 ```
 [返回索引](#技能索引)
 ##急救

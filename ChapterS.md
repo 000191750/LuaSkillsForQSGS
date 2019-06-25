@@ -1,7 +1,7 @@
 代码速查手册（S区）
 ==
 #技能索引
-[伤逝](#伤逝)、[伤逝-旧](#伤逝-旧)、[尚义](#尚义)、[烧营](#烧营)、[涉猎](#涉猎)、[神愤](#神愤)、[甚贤](#甚贤)、[神戟](#神戟)、[神君](#神君)、[神力](#神力)、[神速](#神速)、[神威](#神威)、[神智](#神智)、[生息](#生息)、[师恩](#师恩)、[识破](#识破)、[恃才](#恃才)、[恃勇](#恃勇)、[弑神](#弑神)、[誓仇](#誓仇)、[慎拒](#慎拒)、[守成](#守成)、[授业](#授业)、[淑德](#淑德)、[淑慎](#淑慎)、[双刃](#双刃)、[双雄](#双雄)、[水箭](#水箭)、[水泳](#水泳)、[死谏](#死谏)、[死节](#死节)、[死战](#死战)、[颂词](#颂词)、[颂威](#颂威)、[肃资](#肃资)、[随势](#随势)
+[伤逝](#伤逝)、[伤逝-旧](#伤逝-旧)、[尚义](#尚义)、[烧营](#烧营)、[涉猎](#涉猎)、[神愤](#神愤)、[甚贤](#甚贤)、[神戟](#神戟)、[神君](#神君)、[神力](#神力)、[神速](#神速)、[神威](#神威)、[神智](#神智)、[生息](#生息)、[师恩](#师恩)、[饰非](#饰非)、[识破](#识破)、[恃才](#恃才)、[恃勇](#恃勇)、[弑神](#弑神)、[誓仇](#誓仇)、[慎拒](#慎拒)、[守成](#守成)、[授业](#授业)、[淑德](#淑德)、[淑慎](#淑慎)、[双刃](#双刃)、[双雄](#双雄)、[水箭](#水箭)、[水泳](#水泳)、[死谏](#死谏)、[死节](#死节)、[死战](#死战)、[颂词](#颂词)、[颂威](#颂威)、[肃资](#肃资)、[随势](#随势)
 
 [返回目录](README.md#目录)
 ##伤逝
@@ -724,6 +724,53 @@
 		end ,
 		can_trigger = function(self, target)
 			return target and (not target:hasSkill(self:objectName()))
+		end
+	}
+```
+[返回索引](#技能索引)
+##饰非
+**相关武将**：一将成名2015·郭图&逢纪  
+**描述**：当你需要使用或打出【闪】时，你可以令当前回合角色摸一张牌，然后若其不是手牌唯一最多的角色，则你弃置一名手牌最多的角色的一张牌，视为你使用或打出一张【闪】。
+**引用**：LuaShiFei  
+**状态**：0405验证通过
+```lua
+	LuaShiFei = sgs.CreateTriggerSkill{
+		name = "LuaShiFei",
+		frequency = sgs.Skill_NotFrequent,
+		events = {sgs.CardAsked},
+		on_trigger = function(self, event, player, data)
+			local pattern = data:toStringList()[1]
+			local room = player:getRoom()
+			if pattern ~= "jink" then return false end
+			if room:askForSkillInvoke(player, self:objectName()) then
+				room:getCurrent():drawCards(1)
+				local cantrigger = false
+				for _,p in sgs.qlist(room:getOtherPlayers(room:getCurrent())) do
+					if room:getCurrent():getHandcardNum() < p:getHandcardNum() then
+						cantrigger = true
+						break
+					end
+				end
+				if cantrigger then
+					local DiscardPlayerList = sgs.SPlayerList()
+					local most = 0
+					for _,a in sgs.qlist(room:getAlivePlayers()) do
+						most = math.max(a:getHandcardNum(),most)
+					end
+					for _,b in sgs.qlist(room:getAlivePlayers()) do
+						if b:getHandcardNum() == most then
+							DiscardPlayerList:append(b)
+						end
+					end
+					local target = room:askForPlayerChosen(player, DiscardPlayerList, "@LuaShiFei")
+					local id = room:askForCardChosen(player, target, "he", self:objectName())
+					room:throwCard(id, target, player)
+					local jink = sgs.Sanguosha:cloneCard("jink", sgs.Card_NoSuit, 0)
+					jink:setSkillName(self:objectName())
+					room:provide(jink)
+					return true
+				end
+			end
 		end
 	}
 ```
